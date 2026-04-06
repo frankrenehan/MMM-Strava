@@ -72,7 +72,7 @@ module.exports = NodeHelper.create({
     console.log("[MMM-Strava] Refreshing access token...");
 
     try {
-      const result = await strava.oauth.refreshToken(this.tokens.refresh_token);
+      const result = await this.refreshToken();
 
       this.tokens.access_token = result.access_token;
       this.tokens.refresh_token = result.refresh_token;
@@ -88,6 +88,50 @@ module.exports = NodeHelper.create({
       });
       return false;
     }
+  },
+
+  // Direct HTTPS token refresh (bypasses strava-v3 OAuth quirks)
+  refreshToken: function () {
+    const https = require("https");
+    const postData = JSON.stringify({
+      client_id: this.config.clientId,
+      client_secret: this.config.clientSecret,
+      grant_type: "refresh_token",
+      refresh_token: this.tokens.refresh_token,
+    });
+
+    return new Promise((resolve, reject) => {
+      const req = https.request(
+        {
+          hostname: "www.strava.com",
+          path: "/oauth/token",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(postData),
+          },
+        },
+        (res) => {
+          let data = "";
+          res.on("data", (chunk) => (data += chunk));
+          res.on("end", () => {
+            try {
+              const json = JSON.parse(data);
+              if (json.errors) {
+                reject(new Error(JSON.stringify(json.errors)));
+              } else {
+                resolve(json);
+              }
+            } catch (e) {
+              reject(e);
+            }
+          });
+        }
+      );
+      req.on("error", reject);
+      req.write(postData);
+      req.end();
+    });
   },
 
   // --- Data fetching ---
