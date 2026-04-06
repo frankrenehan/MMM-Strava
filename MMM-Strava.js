@@ -17,7 +17,6 @@ Module.register("MMM-Strava", {
     showSufferScore: true,
     showHeartRate: true,
     showStreak: true,
-    activityType: "Run", // "Run", "Ride", "All"
     units: "metric", // "metric" or "imperial"
     maxWidth: "400px",
     animationSpeed: 1000,
@@ -26,6 +25,7 @@ Module.register("MMM-Strava", {
   // Store data from node_helper
   stravaData: null,
   errorMessage: null,
+  lastUpdated: null,
 
   getStyles: function () {
     return ["MMM-Strava.css"];
@@ -40,9 +40,13 @@ Module.register("MMM-Strava", {
     if (notification === "STRAVA_DATA") {
       this.stravaData = payload;
       this.errorMessage = null;
+      this.lastUpdated = new Date();
       this.updateDom(this.config.animationSpeed);
     } else if (notification === "STRAVA_ERROR") {
-      this.errorMessage = payload.message;
+      // Keep stale data visible; only show error if we have nothing
+      if (!this.stravaData) {
+        this.errorMessage = payload.message;
+      }
       this.updateDom(this.config.animationSpeed);
     }
   },
@@ -52,8 +56,8 @@ Module.register("MMM-Strava", {
     wrapper.className = "mmm-strava";
     wrapper.style.maxWidth = this.config.maxWidth;
 
-    // Error state
-    if (this.errorMessage) {
+    // Error state (only when we have no data at all)
+    if (this.errorMessage && !this.stravaData) {
       wrapper.innerHTML = `<div class="strava-error">${this.errorMessage}</div>`;
       return wrapper;
     }
@@ -95,6 +99,17 @@ Module.register("MMM-Strava", {
       nudge.className = "strava-nudge";
       nudge.textContent = data.nudge;
       wrapper.appendChild(nudge);
+    }
+
+    // Stale data indicator
+    if (this.lastUpdated) {
+      const staleMinutes = Math.floor((new Date() - this.lastUpdated) / 60000);
+      if (staleMinutes >= 30) {
+        const stale = document.createElement("div");
+        stale.className = "strava-stale";
+        stale.textContent = `Updated ${this.formatTimeAgo(this.lastUpdated.toISOString())}`;
+        wrapper.appendChild(stale);
+      }
     }
 
     // Attribution
@@ -170,7 +185,8 @@ Module.register("MMM-Strava", {
       const time = this.formatDuration(act.moving_time);
       const date = this.formatRelativeDate(act.start_date_local);
 
-      let row = `<tr>
+      const tr = document.createElement("tr");
+      let cells = `
         <td>${date}</td>
         <td>${dist.value} ${dist.unit}</td>
         <td class="pace-col">${pace}</td>
@@ -178,21 +194,21 @@ Module.register("MMM-Strava", {
 
       if (this.config.showHeartRate) {
         const hr = act.average_heartrate ? Math.round(act.average_heartrate) : "–";
-        row += `<td>${hr}</td>`;
+        cells += `<td>${hr}</td>`;
       }
 
       if (this.config.showSufferScore) {
         const score = act.suffer_score;
         if (score) {
           const cls = this.getSufferClass(score);
-          row += `<td><span class="suffer-badge ${cls}">${score}</span></td>`;
+          cells += `<td><span class="suffer-badge ${cls}">${score}</span></td>`;
         } else {
-          row += "<td>–</td>";
+          cells += "<td>–</td>";
         }
       }
 
-      row += "</tr>";
-      tbody.innerHTML += row;
+      tr.innerHTML = cells;
+      tbody.appendChild(tr);
     }
 
     table.appendChild(tbody);
@@ -277,8 +293,9 @@ Module.register("MMM-Strava", {
       const km = meters / 1000;
       paceSeconds = seconds / km;
     }
-    const mins = Math.floor(paceSeconds / 60);
-    const secs = Math.round(paceSeconds % 60);
+    const total = Math.round(paceSeconds);
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
     return `${mins}'${secs.toString().padStart(2, "0")}"`;
   },
 

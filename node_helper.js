@@ -22,6 +22,15 @@ module.exports = NodeHelper.create({
   socketNotificationReceived: function (notification, payload) {
     if (notification === "STRAVA_INIT") {
       this.config = payload;
+
+      // Validate config early
+      if (!this.config.clientId || !this.config.clientSecret) {
+        this.sendSocketNotification("STRAVA_ERROR", {
+          message: "Missing clientId or clientSecret in config.js",
+        });
+        return;
+      }
+
       this.loadTokens();
 
       if (!this.tokens) {
@@ -117,7 +126,7 @@ module.exports = NodeHelper.create({
             try {
               const json = JSON.parse(data);
               if (json.errors) {
-                reject(new Error(JSON.stringify(json.errors)));
+                reject(new Error(`${res.statusCode} - ${JSON.stringify(json)}`));
               } else {
                 resolve(json);
               }
@@ -195,19 +204,17 @@ module.exports = NodeHelper.create({
 
   processData: function (athleteResp, activities) {
     const { stats } = athleteResp;
-    const activityType = this.config.activityType || "Run";
 
-    // Filter by activity type
-    let filtered = activities;
-    if (activityType !== "All") {
-      filtered = activities.filter((a) => a.type === activityType);
-    }
+    // Filter to runs only, then sort newest-first
+    let filtered = activities
+      .filter((a) => a.type === "Run")
+      .sort((a, b) => new Date(b.start_date_local) - new Date(a.start_date_local));
 
     // Weekly stats: filter activities from start of current week (Monday)
     const weeklyStats = this.calcWeeklyStats(filtered);
 
     // YTD stats from Strava's built-in stats
-    const ytdStats = this.extractYtdStats(stats, activityType);
+    const ytdStats = this.extractYtdStats(stats);
 
     // Calculate streak (consecutive weeks with at least one run)
     const streak = this.calcWeekStreak(filtered);
@@ -245,15 +252,8 @@ module.exports = NodeHelper.create({
     };
   },
 
-  extractYtdStats: function (stats, activityType) {
-    let ytd;
-    if (activityType === "Ride") {
-      ytd = stats.ytd_ride_totals;
-    } else if (activityType === "Swim") {
-      ytd = stats.ytd_swim_totals;
-    } else {
-      ytd = stats.ytd_run_totals;
-    }
+  extractYtdStats: function (stats) {
+    const ytd = stats.ytd_run_totals;
 
     if (!ytd) {
       return { distance: 0, movingTime: 0, count: 0 };

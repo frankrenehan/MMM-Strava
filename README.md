@@ -1,8 +1,8 @@
 # MMM-Strava
 
-A [MagicMirror²](https://magicmirror.builders/) module that displays your running stats and recent activities from [Strava](https://www.strava.com/).
+A [MagicMirror²](https://magicmirror.builders/) module that displays your Strava running stats on your smart mirror.
 
-![MMM-Strava Preview](screenshots/preview.png)
+![MMM-Strava Preview](screenshots/screenshot.png)
 
 ## Features
 
@@ -10,8 +10,9 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays your runni
 - **Recent runs** – compact table with distance, pace, duration, heart rate, and relative effort
 - **Year to date** – total distance, runs, and time from Strava's built-in stats
 - **Run streak** – consecutive weeks with at least one run
+- **Training nudges** – alerts when mileage drops or you haven't run in a while
 - **Auto-refreshing OAuth** – tokens refresh automatically, no re-authorization needed
-- **Strava-branded** – uses Strava's orange accent color with proper attribution
+- **Stale-safe** – keeps showing last-known data during API hiccups
 
 ## Installation
 
@@ -35,7 +36,9 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays your runni
    ```
    Open the displayed URL in a browser, authorize the app, and tokens will be saved automatically.
 
-   > **Running headless on a Pi?** Open the auth URL on any device, authorize, then you'll be redirected to `localhost:5000/callback?code=...`. If the redirect fails (because you're on a different machine), copy the full callback URL and `curl` it from the Pi.
+   > **Port 5000 in use?** On macOS, AirPlay uses port 5000. Use `--port=5050` or any free port.
+
+   > **Running headless on a Pi?** Run `setup.js` on your Mac, authorize in the browser, then `scp tokens.json` to the Pi.
 
 4. Add the module to your `config/config.js`:
    ```javascript
@@ -66,8 +69,7 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays your runni
 | `showSufferScore` | `true` | Show relative effort badges |
 | `showHeartRate` | `true` | Show average HR column |
 | `showStreak` | `true` | Show weekly run streak |
-| `activityType` | `"Run"` | Filter: `"Run"`, `"Ride"`, or `"All"` |
-| `units` | `"imperial"` | `"imperial"` (miles) or `"metric"` (km) |
+| `units` | `"metric"` | `"metric"` (km) or `"imperial"` (miles) |
 | `maxWidth` | `"400px"` | Maximum module width |
 | `animationSpeed` | `1000` | DOM update animation speed in ms |
 
@@ -76,6 +78,9 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays your runni
 Strava allows 200 requests per 15 minutes and 2,000 per day. The module uses approximately 2–3 requests per refresh cycle, so at the default 15-minute interval you'll use roughly 192–288 requests per day – well within limits.
 
 ## Troubleshooting
+
+**"Missing clientId or clientSecret in config.js"**
+Add your Strava API credentials to the module config in `config/config.js`.
 
 **"No tokens found. Run: node setup.js"**
 You haven't completed the OAuth setup yet. Run `setup.js` as described above.
@@ -92,5 +97,5 @@ MIT – Frank Renehan
 
 ## Acknowledgements
 
-- [strava-v3](https://github.com/node-strava/node-strava-v3) – Node.js Strava API client
 - [MagicMirror²](https://magicmirror.builders/) – the open-source smart mirror platform
+- [Strava API](https://developers.strava.com/) – activity data

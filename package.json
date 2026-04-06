@@ -9,8 +9,7 @@
     "type": "git",
     "url": "https://github.com/frankrenehan/MMM-Strava.git"
   },
-  "dependencies": {},
-  "devDependencies": {
+  "dependencies": {
     "express": "^4.21.0"
   }
 }

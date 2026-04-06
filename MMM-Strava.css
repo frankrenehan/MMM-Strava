@@ -229,6 +229,16 @@
   margin-top: 18px;
 }
 
+/* --- Stale data indicator --- */
+
+.strava-stale {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: center;
+  padding: 6px 0;
+}
+
 /* --- Attribution --- */
 
 .strava-attribution {
