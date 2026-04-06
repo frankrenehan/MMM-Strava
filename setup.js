@@ -133,7 +133,7 @@ app.listen(PORT, () => {
     `&redirect_uri=${encodeURIComponent(CALLBACK_URL)}` +
     `&response_type=code` +
     `&scope=read,activity:read_all` +
-    `&approval_prompt=auto`;
+    `&approval_prompt=force`;
 
   console.log("\n🏃 MMM-Strava OAuth Setup");
   console.log("─".repeat(50));
