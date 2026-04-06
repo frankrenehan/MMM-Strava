@@ -1,10 +1,10 @@
 /* node_helper.js
  * Backend for MMM-Strava. Handles Strava OAuth token management
- * and API calls via strava-v3.
+ * and API calls.
  */
 
 const NodeHelper = require("node_helper");
-const strava = require("strava-v3");
+const https = require("https");
 const fs = require("fs");
 const path = require("path");
 
@@ -90,9 +90,8 @@ module.exports = NodeHelper.create({
     }
   },
 
-  // Direct HTTPS token refresh (bypasses strava-v3 OAuth quirks)
+  // Direct HTTPS token refresh
   refreshToken: function () {
-    const https = require("https");
     const postData = JSON.stringify({
       client_id: this.config.clientId,
       client_secret: this.config.clientSecret,
@@ -137,26 +136,22 @@ module.exports = NodeHelper.create({
   // --- Data fetching ---
 
   fetchData: async function () {
-    // Configure strava client
-    strava.client({
-      client_id: this.config.clientId,
-      client_secret: this.config.clientSecret,
-    });
-
     const valid = await this.refreshTokenIfNeeded();
     if (!valid) return;
 
     const accessToken = this.tokens.access_token;
 
     try {
-      // Fetch in parallel: athlete stats + recent activities
-      const [athleteResp, activitiesResp] = await Promise.all([
-        this.getAthleteStats(accessToken),
-        this.getRecentActivities(accessToken),
+      // Get athlete profile first (need the ID for stats)
+      const athlete = await this.stravaGet("/athlete", accessToken);
+
+      // Fetch stats + recent activities in parallel
+      const [stats, activities] = await Promise.all([
+        this.stravaGet(`/athletes/${athlete.id}/stats`, accessToken),
+        this.stravaGet("/athlete/activities?per_page=20", accessToken),
       ]);
 
-      // Process data
-      const payload = this.processData(athleteResp, activitiesResp);
+      const payload = this.processData({ athlete, stats }, activities || []);
       this.sendSocketNotification("STRAVA_DATA", payload);
     } catch (err) {
       console.error("[MMM-Strava] Fetch error:", err.message);
@@ -166,37 +161,33 @@ module.exports = NodeHelper.create({
     }
   },
 
-  getAthleteStats: function (accessToken) {
+  // Direct HTTPS GET to Strava API v3
+  stravaGet: function (endpoint, accessToken) {
     return new Promise((resolve, reject) => {
-      // First get the athlete ID
-      strava.athlete.get({ access_token: accessToken }, (err, athlete) => {
-        if (err) return reject(err);
-
-        strava.athletes.stats(
-          { id: athlete.id, access_token: accessToken },
-          (err2, stats) => {
-            if (err2) return reject(err2);
-            resolve({ athlete, stats });
-          }
-        );
-      });
-    });
-  },
-
-  getRecentActivities: function (accessToken) {
-    return new Promise((resolve, reject) => {
-      // Fetch last 20 activities (we'll filter client-side)
-      strava.athlete.listActivities(
+      const req = https.request(
         {
-          access_token: accessToken,
-          per_page: 20,
-          page: 1,
+          hostname: "www.strava.com",
+          path: `/api/v3${endpoint}`,
+          method: "GET",
+          headers: { Authorization: `Bearer ${accessToken}` },
         },
-        (err, activities) => {
-          if (err) return reject(err);
-          resolve(activities || []);
+        (res) => {
+          let data = "";
+          res.on("data", (chunk) => (data += chunk));
+          res.on("end", () => {
+            if (res.statusCode !== 200) {
+              return reject(new Error(`${res.statusCode} - ${data}`));
+            }
+            try {
+              resolve(JSON.parse(data));
+            } catch (e) {
+              reject(e);
+            }
+          });
         }
       );
+      req.on("error", reject);
+      req.end();
     });
   },
 
