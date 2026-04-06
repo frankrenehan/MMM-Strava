@@ -1,0 +1,245 @@
+/* MMM-Strava.css */
+
+.mmm-strava {
+  font-family: "Roboto Condensed", "Roboto", "Helvetica Neue", sans-serif;
+  line-height: 1.4;
+}
+
+/* --- Loading / Error --- */
+
+.strava-loading {
+  padding: 20px 0;
+}
+
+.strava-error {
+  color: #f87171;
+  font-size: 13px;
+  font-weight: 300;
+  padding: 10px 0;
+}
+
+/* --- Divider --- */
+
+.strava-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 14px 0;
+}
+
+/* --- Section Label --- */
+
+.strava-section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 8px;
+}
+
+/* --- Section 1: Weekly Stats --- */
+
+.strava-week-stats {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.week-primary {
+  flex: 1.4;
+}
+
+.week-primary-value {
+  font-size: 38px;
+  font-weight: 300;
+  color: #fc4c02;
+  line-height: 1;
+}
+
+.week-primary-unit {
+  font-size: 16px;
+  font-weight: 300;
+  color: #fc4c02;
+  opacity: 0.7;
+}
+
+.week-primary-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 4px;
+}
+
+.week-secondary {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.week-stat-value {
+  font-size: 20px;
+  font-weight: 300;
+  color: #ffffff;
+}
+
+.week-stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* --- Section 2: Recent Runs --- */
+
+.strava-runs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.strava-runs-table th {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: left;
+  padding-bottom: 6px;
+}
+
+.strava-runs-table th:not(:first-child) {
+  text-align: right;
+}
+
+.strava-runs-table td {
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 5px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.strava-runs-table td:not(:first-child) {
+  text-align: right;
+}
+
+.strava-runs-table td:first-child {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pace-col {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Suffer score badges */
+
+.suffer-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 400;
+  padding: 1px 6px;
+  border-radius: 3px;
+  line-height: 1.4;
+}
+
+.suffer-low {
+  background: rgba(156, 163, 175, 0.2);
+  color: #9ca3af;
+}
+
+.suffer-moderate {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.suffer-high {
+  background: rgba(252, 76, 2, 0.2);
+  color: #fc4c02;
+}
+
+.suffer-extreme {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* --- Section 3: YTD --- */
+
+.strava-ytd-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ytd-item {
+  text-align: center;
+}
+
+.ytd-val {
+  font-size: 18px;
+  font-weight: 300;
+  color: #ffffff;
+}
+
+.ytd-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 2px;
+}
+
+/* --- Section 4: Last Run + Streak --- */
+
+.strava-last-run-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.last-run-text {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.last-run-text span {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.strava-streak {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.streak-count {
+  color: #fc4c02;
+  font-weight: 400;
+}
+
+/* --- Nudge (training alert) --- */
+
+.strava-nudge {
+  font-size: 12px;
+  font-weight: 400;
+  color: #fc4c02;
+  opacity: 0.8;
+  text-align: center;
+  padding: 8px 0 4px;
+  border-top: 1px solid rgba(252, 76, 2, 0.15);
+  margin-top: 14px;
+}
+
+/* --- Attribution --- */
+
+.strava-attribution {
+  margin-top: 16px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.2);
+  text-align: center;
+}
+
+.strava-brand {
+  color: rgba(252, 76, 2, 0.4);
+}
