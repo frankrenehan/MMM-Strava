@@ -18,7 +18,7 @@ Module.register("MMM-Strava", {
     showHeartRate: true,
     showStreak: true,
     activityType: "Run", // "Run", "Ride", "All"
-    units: "imperial", // "imperial" or "metric"
+    units: "metric", // "metric" or "imperial"
     maxWidth: "400px",
     animationSpeed: 1000,
   },
