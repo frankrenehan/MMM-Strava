@@ -7,6 +7,7 @@ const NodeHelper = require("node_helper");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
+const { saveTokensSync } = require("./lib/token-store.js");
 
 module.exports = NodeHelper.create({
   tokenFile: null,
@@ -74,9 +75,10 @@ module.exports = NodeHelper.create({
     }
   },
 
+  // Atomic replace: a crash mid-write can never leave a truncated token file.
   saveTokens: function () {
     try {
-      fs.writeFileSync(this.tokenFile, JSON.stringify(this.tokens, null, 2));
+      saveTokensSync(this.tokenFile, this.tokens);
     } catch (err) {
       console.error("[MMM-Strava] Error saving tokens:", err.message);
     }

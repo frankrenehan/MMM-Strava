@@ -1,3 +1,13 @@
 node_modules/
-tokens.json
 .DS_Store
+
+# OAuth token file, plus backups and the temp files the atomic writer
+# creates next to it.
+tokens.json
+tokens.json.*
+.tokens.json.*
+*.pre-atomic-write
+
+# Local environment
+.env
+.env.*

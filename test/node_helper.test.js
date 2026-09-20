@@ -1,5 +1,7 @@
-/* Tests for tokenPath handling in node_helper.js.
+/* Tests for tokenPath handling and token persistence in node_helper.js.
  * Run with: npm test  (node --test)
+ *
+ * No real OAuth credentials are used anywhere in this file.
  */
 
 const { test, mock } = require("node:test");
@@ -137,4 +139,88 @@ test("non-string tokenPath emits STRAVA_ERROR and aborts init", () => {
   assert.equal(helper.sent[0].notification, "STRAVA_ERROR");
   assert.equal(helper.loadTokens.mock.callCount(), 0);
   assert.equal(helper.fetchData.mock.callCount(), 0);
+});
+
+// --- Atomic token persistence via the helper ---
+
+function strayFiles(dir, tokenFile) {
+  return fs.readdirSync(dir).filter((name) => name !== path.basename(tokenFile));
+}
+
+test("saveTokens round-trips through loadTokens for a module-local tokens.json", () => {
+  const tmp = makeTmpDir();
+  try {
+    const helper = makeHelper();
+    // Same default file name the module uses, in a throwaway directory.
+    helper.tokenFile = path.join(tmp, "tokens.json");
+    helper.tokens = { ...FAKE_TOKENS };
+    helper.saveTokens();
+
+    assert.deepEqual(JSON.parse(fs.readFileSync(helper.tokenFile, "utf8")), FAKE_TOKENS);
+    assert.deepEqual(strayFiles(tmp, helper.tokenFile), []);
+
+    const reader = makeHelper();
+    reader.tokenFile = helper.tokenFile;
+    reader.loadTokens();
+    assert.deepEqual(reader.tokens, FAKE_TOKENS);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("saveTokens writes an owner-only file and leaves no temp file behind", () => {
+  const tmp = makeTmpDir();
+  try {
+    const helper = makeHelper();
+    helper.tokenFile = path.join(tmp, "strava-tokens.json");
+    helper.tokens = { ...FAKE_TOKENS };
+    helper.saveTokens();
+
+    assert.deepEqual(strayFiles(tmp, helper.tokenFile), []);
+    if (process.platform !== "win32") {
+      assert.equal(fs.statSync(helper.tokenFile).mode & 0o777, 0o600);
+    }
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("saveTokens failure logs and leaves the previous token file intact", () => {
+  const tmp = makeTmpDir();
+  try {
+    const helper = makeHelper();
+    helper.tokenFile = path.join(tmp, "tokens.json");
+    helper.tokens = { ...FAKE_TOKENS };
+    helper.saveTokens();
+    const before = fs.readFileSync(helper.tokenFile, "utf8");
+
+    const errors = [];
+    mock.method(console, "error", (...args) => errors.push(args.join(" ")));
+    mock.method(fs, "renameSync", () => {
+      throw new Error("simulated rename failure");
+    });
+
+    helper.tokens = { ...FAKE_TOKENS, access_token: "never-written" };
+    // Existing behaviour: the error is logged, not thrown.
+    assert.doesNotThrow(() => helper.saveTokens());
+    mock.restoreAll();
+
+    assert.equal(fs.readFileSync(helper.tokenFile, "utf8"), before);
+    assert.deepEqual(strayFiles(tmp, helper.tokenFile), []);
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /Error saving tokens/);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+// --- setup.js persistence ---
+
+test("setup.js persists initial tokens through the shared atomic writer", () => {
+  const source = fs.readFileSync(path.join(MODULE_DIR, "setup.js"), "utf8");
+
+  assert.match(source, /require\("\.\/lib\/token-store\.js"\)/);
+  assert.match(source, /saveTokensSync\(TOKEN_FILE, tokens\)/);
+  // No direct, non-atomic write to the token file remains.
+  assert.doesNotMatch(source, /writeFileSync/);
 });

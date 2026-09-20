@@ -13,9 +13,9 @@
  */
 
 const express = require("express");
-const fs = require("fs");
 const path = require("path");
 const https = require("https");
+const { saveTokensSync } = require("./lib/token-store.js");
 
 // Parse args
 const args = {};
@@ -54,7 +54,8 @@ app.get("/callback", async (req, res) => {
   try {
     const tokens = await exchangeCode(code);
 
-    fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2));
+    // Same atomic, owner-only write the runtime refresh path uses.
+    saveTokensSync(TOKEN_FILE, tokens);
     console.log("✅ Tokens saved to tokens.json");
     console.log(`   Access token expires at: ${new Date(tokens.expires_at * 1000).toISOString()}`);
     console.log("   Refresh token will auto-renew.\n");

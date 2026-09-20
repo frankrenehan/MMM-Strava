@@ -12,6 +12,7 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays your Strav
 - **Run streak** – consecutive weeks with at least one run
 - **Training nudges** – alerts when mileage drops or you haven't run in a while
 - **Auto-refreshing OAuth** – tokens refresh automatically, no re-authorization needed
+- **Crash-safe token storage** – token writes are atomic, so a power cut can't corrupt your credentials
 - **Stale-safe** – keeps showing last-known data during API hiccups
 
 ## Installation
@@ -41,6 +42,8 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays your Strav
    > **Running headless on a Pi?** Run `setup.js` on your Mac, authorize in the browser, then `scp tokens.json` to the Pi.
 
    > **Storing tokens outside the module directory?** Set `tokenPath` in the module config to an absolute path and move `tokens.json` there. The module reads and refreshes tokens at that location.
+
+   > **Note:** whether tokens live in the module directory or at a custom `tokenPath`, they are written atomically – see [Token storage](#token-storage) below.
 
 4. Add the module to your `config/config.js`:
    ```javascript
@@ -75,6 +78,22 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays your Strav
 | `units` | `"metric"` | `"metric"` (km) or `"imperial"` (miles) |
 | `maxWidth` | `"400px"` | Maximum module width |
 | `animationSpeed` | `1000` | DOM update animation speed in ms |
+
+## Token storage
+
+Tokens are stored as JSON in `tokens.json` (module directory by default, or at `tokenPath` if you set one).
+
+Both the initial `setup.js` write and every automatic refresh persist tokens **atomically**: the new contents are
+written to a temporary file in the same directory, flushed to disk, and then renamed over the token file, with the
+parent directory flushed afterwards. The token file is therefore only ever replaced by a complete copy — if the host
+loses power or the process is killed mid-write, you are left with either the previous tokens or the new ones, never a
+truncated or empty file. If the replacement can't be written, the existing token file is left untouched.
+
+Token files are created with owner-only permissions (`0600`) on platforms that support them.
+
+If the final directory flush fails on a filesystem that supports it, the module logs a warning: the tokens were
+saved, but that last durability step didn't complete. Filesystems and platforms with no directory-flush
+equivalent (Windows, some network mounts) are skipped silently.
 
 ## API Rate Limits
 
