@@ -9,6 +9,7 @@ Module.register("MMM-Strava", {
   defaults: {
     clientId: "",
     clientSecret: "",
+    tokenPath: "", // optional absolute path to the token file; default: tokens.json in module dir
     updateInterval: 900000, // 15 minutes
     recentActivities: 3,
     showWeeklyStats: true,

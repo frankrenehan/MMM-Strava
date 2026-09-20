@@ -40,6 +40,8 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays your Strav
 
    > **Running headless on a Pi?** Run `setup.js` on your Mac, authorize in the browser, then `scp tokens.json` to the Pi.
 
+   > **Storing tokens outside the module directory?** Set `tokenPath` in the module config to an absolute path and move `tokens.json` there. The module reads and refreshes tokens at that location.
+
 4. Add the module to your `config/config.js`:
    ```javascript
    {
@@ -61,6 +63,7 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays your Strav
 |--------|---------|-------------|
 | `clientId` | `""` | Your Strava API Client ID |
 | `clientSecret` | `""` | Your Strava API Client Secret |
+| `tokenPath` | `""` | Optional **absolute** path to the token file (e.g. `"/home/pi/.config/mmm-strava/tokens.json"`). When empty, `tokens.json` in the module directory is used. A relative path is rejected and the module will not start. |
 | `updateInterval` | `900000` | Refresh interval in ms (default: 15 min) |
 | `recentActivities` | `3` | Number of recent runs to display |
 | `showWeeklyStats` | `true` | Show "This Week" section |

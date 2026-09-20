@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "MagicMirror² module for displaying Strava running stats and recent activities",
   "main": "node_helper.js",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
   "author": "Frank Renehan",
   "license": "MIT",
   "repository": {

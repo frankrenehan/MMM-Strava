@@ -31,6 +31,19 @@ module.exports = NodeHelper.create({
         return;
       }
 
+      // Optional tokenPath: must be an absolute path if supplied.
+      // When not set, keep the default tokens.json in the module directory.
+      if (this.config.tokenPath !== undefined && this.config.tokenPath !== "") {
+        if (typeof this.config.tokenPath !== "string" || !path.isAbsolute(this.config.tokenPath)) {
+          console.error("[MMM-Strava] tokenPath must be an absolute filesystem path.");
+          this.sendSocketNotification("STRAVA_ERROR", {
+            message: "tokenPath must be an absolute path. Check config.js",
+          });
+          return;
+        }
+        this.tokenFile = this.config.tokenPath;
+      }
+
       this.loadTokens();
 
       if (!this.tokens) {
